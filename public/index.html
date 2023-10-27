@@ -1,43 +1,854 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Monger Trading</title>
+  <script src="https://unpkg.com/vue@2.6.12/dist/vue.min.js"></script>
+  <script src="./trading-vue.min.js"></script>
+
+  <style>
+    html,
+    body {
+      background-color: rgb(18, 24, 38);
+      margin: 0;
+      font-family: BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu,
+        Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    }
+
+    #app {
+      margin: 20px 0;
+    }
+
+    .night-mode {
+      position: absolute;
+      top: 10px;
+      right: 80px;
+      color: #888;
+      font: 11px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+        Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    }
+
+    .tf-selector {
+      position: absolute;
+      top: 15px;
+      z-index: 199;
+      right: 80px;
+      font: 16px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+        Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+      background: #34363b;
+      color: #ccc;
+      padding: 8px;
+      border-radius: 3px;
+    }
+
+    .trading-vue-chart {
+      margin: 0 28px !important;
+    }
+
+    .trading-vue-toolbar {
+      display: none;
+    }
+
+    .header {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 12px 0 12px 12px;
+    }
+
+    .header div,
+    .header button {
+      margin-right: 12px;
+    }
+
+    .header div {
+      color: #fff;
+    }
+
+    .header button {
+      border-radius: 10px;
+      padding: 5px 12px;
+    }
+
+    .header div select {
+      margin-left: 10px;
+      font-size: medium;
+      color: white;
+      border-radius: 10px;
+      font-weight: 700;
+      padding: 10px 22px;
+      background-color: rgb(31 42 66);
+      border: none;
+    }
+
+    .title {
+      font-size: larger;
+    }
+
+    #intervalSelect,
+    #daysSelect {
+      display: flex;
+      background: rgb(31 42 66) !important;
+      margin-left: 10px;
+      /* border: 2px solid white; */
+      border-radius: 10px;
+      padding: 5px 0px 5px 12px;
+    }
+
+    #intervalSelect div,
+    #daysSelect div {
+      padding: 5px;
+      font-size: medium;
+      font-weight: 700;
+    }
+
+    .selected {
+      border-radius: 3px;
+      color: black !important;
+      background-color: white;
+    }
+
+    .btn {
+      transition: opacity 0.2s;
+    }
+
+    button:disabled {
+      opacity: 0.5 !important;
+      box-shadow: 0px 0px 3px 0px white;
+    }
+
+    .stockTitle {
+      color: #ffffff;
+      position: absolute;
+      font-size: medium;
+      top: 100px;
+      left: 24px;
+      z-index: 1;
+    }
+
+    #startBtn {
+      background-color: rgb(0, 240, 0);
+      color: white;
+      font-weight: 700;
+      opacity: 1;
+      border: none;
+    }
+
+    #stopBtn {
+      background-color: red;
+      color: #fff;
+      font-weight: 700;
+      opacity: 1;
+      border: none;
+    }
+
+    .loader {
+      position: fixed;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+    }
+
+    .circle-loader {
+      width: 50px;
+      height: 50px;
+      z-index: 9999;
+    }
+
+    .loader-circle {
+      stroke: #3498db;
+      stroke-dasharray: 80;
+      stroke-dashoffset: 60;
+    }
+
+    .logo {
+      position: absolute;
+      right: 20px;
+    }
+
+    @keyframes loader-rotate {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    p {
+      color: #777777;
+      font-size: medium;
+      margin: 0;
+      text-align: end;
+    }
+
+    span {
+      font-size: x-large;
+      font-weight: bold;
+      color: white;
+    }
+
+    .current-price {
+      margin: 0 40px 0 0;
+      text-align: end;
+    }
+
+    .current-price span {
+      font-size: xx-large;
+    }
+
+    .day:disabled {
+      opacity: 0.5 !important;
+    }
+
+    .row {
+      display: flex;
+      margin: 10px;
+      justify-content: space-around;
+    }
+
+    .row div {
+      margin-left: 5px;
+    }
+
+    .row div::-webkit-scrollbar {
+      display: none;
+    }
+
+    .fourthRow {
+      display: contents;
+    }
+
+    .open,
+    .high,
+    .low,
+    .close {
+      margin: 0 10px;
+    }
+
+    .bullish,
+    .bearish {
+      align-items: center;
+      display: flex;
+      margin-bottom: 6px;
+      justify-content: space-between;
+    }
+
+    .bullish span,
+    .bearish span {
+      margin-right: 15px;
+    }
+
+    .bullish p,
+    .bearish p {
+      color: #a5a5a5;
+    }
+
+    #bull,
+    #bear {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: red;
+    }
+
+    .side-container {
+      color: white;
+      position: absolute;
+      float: right;
+      top: 20%;
+      text-align: start;
+      padding: 10px;
+
+      border-radius: 10px;
+      right: 20px;
+    }
+
+    .ohlcv {
+      display: flex;
+      justify-content: space-around;
+      align-items: baseline;
+    }
+
+    .horizontal {
+      color: white;
+      position: relative;
+    }
+
+    .line {
+      border-top: 2px solid #ccc;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    <div class="header">
+      <div>
+        <select id="stockSelect"></select>
+      </div>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+      <div style="display: flex; align-items: center">
+        <div id="intervalSelect">
+          <div class="interval" :class="{selected: interval === 1}" @click="setInterval(1)">
+            1m
+          </div>
+          <div class="interval" :class="{selected: interval === 5}" @click="setInterval(5)">
+            5m
+          </div>
+          <div class="interval" :class="{selected: interval === 15}" @click="setInterval(15)">
+            15m
+          </div>
+        </div>
+      </div>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+      <div style="display: flex; align-items: center">
+        <div id="daysSelect">
+          <div class="day" :class="{selected: day === 1}" :disabled="isDisabled(1)" @click="setDay(1)">
+            1D
+          </div>
+          <div class="day" :class="{selected: day === 3}" @click="setDay(3)">
+            3D
+          </div>
+          <div class="day" :class="{selected: day === 7}" @click="setDay(7)">
+            7D
+          </div>
+        </div>
+      </div>
+
+      <button id="startBtn">Start</button>
+      <button id="stopBtn" disabled>Stop</button>
+      <div class="logo">
+        <button style="background: none; box-shadow: none; border: none" @click="sidebarOp(op)">
+          <img style="cursor: pointer" width="auto" height="65"
+            src="https://mongertrading.com/wp-content/uploads/2023/08/cropped-Asset-1mongericon2-232x300.png"
+            class="custom-logo" alt="Monger" decoding="async" fetchpriority="high" />
+        </button>
+      </div>
+    </div>
+    <!-- <div class="tf-selector"><span class="timeframe" style="color: rgb(68, 199, 103);">
+            30m
+        </span><span class="timeframe">
+            15m
+        </span><span class="timeframe">
+            5m
+        </span><span class="timeframe">
+            1m
+        </span></div> -->
+    <div id="trading_View">
+      <div class="loader" id="loader">
+        <svg v-if="loading" version="1.1" class="circle-loader" xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 100 100"
+          enable-background="new 0 0 0 0" xml:space="preserve">
+          <circle fill="none" class="loader-circle" stroke="#000" stroke-width="4" stroke-miterlimit="10" cx="50"
+            cy="50" r="48">
+            <animateTransform attributeName="transform" dur="1s" type="rotate" from="0 50 50" to="360 50 50"
+              repeatCount="indefinite" />
+          </circle>
+        </svg>
+      </div>
+      <div class="stockTitle">{{ this.title }}</div>
+
+      <trading-vue :titleTxt="this.title" :data="data" :width="this.width - this.sideWidth" :height="this.height - 120"
+        :toolbar="true" :chart-config="{TB_ICON_BRI: 1.25}" :color-back="colors.colorBack"
+        :color-grid="colors.colorGrid" :color-text="colors.colorText">
+      </trading-vue>
+      <span class="night-mode"> </span>
+    </div>
+    <div class="side-container" id="side-container">
+      <div class="horizontal">Details</div>
+      <div class="line"></div>
+      <div>
+        <div class="current-price">
+          <span id="current-price">0</span>
+          <p>Current Price</p>
+        </div>
+
+        <div class="firstRow row">
+          <div class="open">
+            <span id="open-value">0</span>
+            <p>Open</p>
+          </div>
+          <div class="high">
+            <span id="high-value">0</span>
+            <p>High</p>
+          </div>
+        </div>
+        <div class="secondRow row">
+          <div class="low">
+            <span id="low-value">0</span>
+            <p>Low</p>
+          </div>
+          <div class="close">
+            <span id="close-value">0</span>
+            <p>Close</p>
+          </div>
+        </div>
+        <div class="thirdRow row">
+          <div class="accuracy">
+            <span id="accuracy">0%</span>
+            <p>Accuracy</p>
+          </div>
+          <div class="volume">
+            <span id="volume">0</span>
+            <p>volume</p>
+          </div>
+        </div>
+        <div class="fourthRow row">
+          <div class="bullish">
+            <p>Bullish Doji</p>
+            <span id="bull"></span>
+          </div>
+          <div class="bearish">
+            <p>Bearish Doji</p>
+            <span id="bear"></span>
+          </div>
+        </div>
+      </div>
+      <div class="horizontal">Patterns</div>
+      <div class="line"></div>
+    </div>
+    <!-- <input type="checkbox" v-model="night"> -->
+    <!-- <label>NM</label> -->
+  </div>
+  <script>
+    new TradingView.widget({
+      width: 400,
+      height: 300,
+      symbol: "AAPL",
+      interval: "M", // Default interval (daily)
+      timezone: "ETC/UTC",
+      theme: "dark",
+      style: "1",
+      toolbar_bg: "#f1f3f6",
+      withdateranges: true, // Enable date range picker
+      hide_side_toolbar: false, // Show interval selection
+      allow_symbol_change: true,
+      details: true,
+      locale: "en",
+      save_image: false,
+      container_id: "tv_chart_container",
+    });
+  </script>
+  <script>
+    let loadData = [];
+    const stocks = [
+      { name: "GOOGLE", value: "GOOGL" },
+      { name: "AAPLE", value: "AAPL" },
+      { name: "NVIDIA", value: "NVDA" },
+      { name: "TESLA", value: "TSLA" },
+      { name: "MICROSOFT", value: "MSFT" },
+      { name: "AMAZON", value: "AMZN" },
+      { name: "SPOTIFY", value: "SPOT" },
+      { name: "AIRBNB", value: "ABNB" },
+      { name: "AMD", value: "AMD" },
+      { name: "FACEBOOK", value: "META" },
+    ];
+
+    const intervals = [
+      { name: "1m", value: 1 },
+      { name: "5m", value: 5 },
+      { name: "15m", value: 15 },
+    ];
+
+    const days = [
+      { name: "1D", value: 1 },
+      { name: "3D", value: 3 },
+      { name: "7D", value: 7 },
+    ];
+
+    function renderStocks() {
+      const stockSelect = document.getElementById("stockSelect");
+      stocks.forEach((stock) => {
+        const option = document.createElement("option");
+        option.value = stock.value;
+        option.innerText = stock.name;
+        stockSelect.appendChild(option);
+      });
+    }
+    document.addEventListener("DOMContentLoaded", renderStocks);
+    const element = document.getElementById("loader");
+    element.style.left = this.op
+      ? window.innerWidth / 2 + "px"
+      : (window.innerWidth - (window.innerWidth * 1) / 4) / 2 + "px";
+  </script>
+  <script>
+    let lastData;
+    let lastIndex;
+    let newOpen;
+    let newHigh;
+    let newLow;
+    let newClose;
+    let Data3 = {};
+    let previousData;
+    let ws;
+    async function fetchData(vm, symbol, inter, day) {
+      try {
+        vm.loading = true;
+        vm.abortController = new AbortController();
+        vm.abortSignal = vm.abortController.signal;
+        const response = await fetch("http://18.119.106.158/data/data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            SYMB: symbol,
+            Interval: inter,
+            endDate: new Date().toLocaleString("en-US", {
+              timeZone: "Asia/Kolkata",
+            }),
+          }),
+          signal: vm.abortSignal,
+        });
+
+        const predictedResponse = await fetch(
+          "http://18.119.106.158/data/prediction",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              SYMB: symbol,
+              Interval: inter,
+              Range: day,
+            }),
+            signal: vm.abortSignal,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const rawData = await response.json();
+        const predictedData = await predictedResponse.json();
+
+
+        if (rawData && predictedData.data[0][0]) {
+          var accuracy = document.getElementById("accuracy");
+          accuracy.innerText = predictedData.accuracy.toFixed(2) + "%";
+          var bull = document.getElementById("bull");
+          bull.style.backgroundColor = predictedData.bull ? "green" : "red";
+
+          var bear = document.getElementById("bear");
+          bear.style.backgroundColor = predictedData.bear ? "green" : "red";
+          loadData.push(predictedData.data[0]);
+
+          var newData = { ohlcv: rawData.concat(loadData) };
+          vm.data = new TradingVueJs.DataCube(newData);
+          lastData = newData.ohlcv[rawData.length - 1];
+          lastIndex = rawData.length - 1;
+          newHigh = lastData[4];
+          newOpen = lastData[4];
+          newLow = lastData[4];
+
+          if (lastData) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.close();
+            }
+
+            ws = new WebSocket(
+              "wss://ws.twelvedata.com/v1/quotes/price?apikey=7a8e68b26a9d472180f530cbfe1b7dd8"
+            );
+            ws.onopen = () => {
+              console.log("Connected to TwelveData WebSocket");
+              const subscriptionRequest = {
+                action: "subscribe",
+                params: {
+                  symbols: symbol,
+                },
+              };
+              ws.send(JSON.stringify(subscriptionRequest));
+            };
+
+            ws.onmessage = async (event) => {
+              try {
+                const wsData = JSON.parse(event.data);
+                console.log("Received WebSocket data:", wsData);
+
+                var openValue = document.getElementById("open-value");
+                var highValue = document.getElementById("high-value");
+                var lowValue = document.getElementById("low-value");
+                var closeValue = document.getElementById("close-value");
+                openValue.innerText = predictedData.data[0][1]
+                  ? predictedData.data[0][1].toFixed(2)
+                  : 0;
+                highValue.innerText = predictedData.data[0][2]
+                  ? predictedData.data[0][2].toFixed(2)
+                  : 0;
+                lowValue.innerText = predictedData.data[0][3]
+                  ? predictedData.data[0][3].toFixed(2)
+                  : 0;
+                closeValue.innerText = predictedData.data[0][4]
+                  ? predictedData.data[0][4].toFixed(2)
+                  : 0;
+
+                newClose = wsData.price ? wsData.price : lastData[4];
+                if (wsData.price > newHigh) {
+                  newHigh = wsData.price;
+                } else if (wsData.price < newLow) {
+                  newLow = wsData.price;
+                }
+                //  const arrays = [[lastData[0], 173.45, 173.55, 173.40, 173.65, 200],[lastData[0], 172.03, 172.13, 171.98, 172.27, 100],[lastData[0], 175.25, 175.35, 175.20, 175.45, 150],[lastData[0], 179.87, 180.97, 179.82, 180.11, 50],[lastData[0], 163.45, 163.55, 163.40, 163.65, 75]];
+                var valueElement = document.getElementById("current-price");
+                var volume = document.getElementById("volume");
+
+                // Update the inner text of the element with the data value
+                valueElement.style.color =
+                  wsData.price > previousData ? "#23a776" : "#e54150";
+                valueElement.innerText = wsData.price
+                  ? "$" + wsData.price.toFixed(2)
+                  : "$0";
+                volume.innerText = wsData.day_volume ? wsData.day_volume : 0;
+                rawData[lastIndex] = [
+                  lastData[0],
+                  newOpen,
+                  newHigh,
+                  newLow,
+                  newClose,
+                  0,
+                ];
+                console.log(newOpen, newHigh, newLow, newClose);
+                var newWsData = { ohlcv: rawData.concat(loadData) };
+                vm.data = new TradingVueJs.DataCube(newWsData);
+                previousData = wsData.price;
+              } catch (error) {
+                console.error("Error parsing WebSocket data:", error);
+              }
+            };
+
+            ws.onclose = () => {
+              console.log("Disconnected from TwelveData WebSocket");
+            };
+
+            ws.onerror = (error) => {
+              console.error("WebSocket error:", error);
+            };
+            return () => {
+              ws.close();
+            };
+          }
+        } else {
+          console.log("else");
+          var newData = { ohlcv: rawData };
+          vm.data = new TradingVueJs.DataCube(newData);
+          lastData = newData.ohlcv[rawData.length - 1];
+          lastIndex = rawData.length - 1;
+          newOpen = lastData[4];
+          newHigh = lastData[4];
+          newLow = lastData[4];
+          if (lastData) {
+            ws = new WebSocket(
+              "wss://ws.twelvedata.com/v1/quotes/price?apikey=7a8e68b26a9d472180f530cbfe1b7dd8"
+            );
+
+            ws.onopen = () => {
+              console.log("Connected to TwelveData WebSocket");
+              const subscriptionRequest = {
+                action: "subscribe",
+                params: {
+                  symbols: symbol,
+                },
+              };
+              ws.send(JSON.stringify(subscriptionRequest));
+            };
+
+            ws.onmessage = async (event) => {
+              try {
+                const wsData = JSON.parse(event.data);
+                console.log("Received WebSocket data:", wsData);
+
+                newClose = wsData.price ? wsData.price : lastData[4];
+                if (wsData.price > newHigh) {
+                  newHigh = wsData.price;
+                } else if (wsData.price < newLow) {
+                  newLow = wsData.price;
+                }
+                //  const arrays = [[lastData[0], 173.45, 173.55, 173.40, 173.65, 200],[lastData[0], 172.03, 172.13, 171.98, 172.27, 100],[lastData[0], 175.25, 175.35, 175.20, 175.45, 150],[lastData[0], 179.87, 180.97, 179.82, 180.11, 50],[lastData[0], 163.45, 163.55, 163.40, 163.65, 75]];
+
+                var newWsData = { ohlcv: rawData };
+                newWsData.ohlcv[lastIndex] = [
+                  lastData[0],
+                  newOpen,
+                  newHigh,
+                  newLow,
+                  newClose,
+                  wsData.day_volume,
+                ];
+                //newWsData.ohlcv[lastIndex] = arrays[Math.floor(Math.random() * arrays.length)]
+                console.log(newOpen, newHigh, newLow, newClose);
+                vm.data = new TradingVueJs.DataCube(newWsData);
+              } catch (error) {
+                console.error("Error parsing WebSocket data:", error);
+              }
+            };
+
+            ws.onclose = () => {
+              console.log("Disconnected from TwelveData WebSocket");
+            };
+
+            ws.onerror = (error) => {
+              console.error("WebSocket error:", error);
+            };
+            return () => {
+              ws.close();
+            };
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        vm.loading = false; // Set loading to false when the fetch is complete (success or error)
+      }
+    }
+
+    // fetchData('AAPL')
+  </script>
+  <script></script>
+  <script>
+    let selectedStock = stocks[0].value;
+    let selectedInterval = 1;
+    let selectedDay = 1;
+    let activeBtn;
+    let loading = false;
+    let intervalId; // Add this line to store the interval ID
+    let selectOp = false; // Add this line to store the interval ID
+
+    let vm = new Vue({
+      el: "#app",
+      data: {
+        title: selectedStock,
+        op: selectOp,
+        data: new TradingVueJs.DataCube({}),
+        width: window.innerWidth,
+        sideWidth: (window.innerWidth * 1) / 4,
+        height: window.innerHeight,
+        night: true,
+        selectedStock: selectedStock,
+        interval: selectedInterval,
+        day: selectedDay,
+        abortController: new AbortController(),
+        abortSignal: null,
+        loading: loading,
+      },
+      mounted() {
+        window.addEventListener("resize", this.onResize);
+        window.DataCube = this.data;
+      },
+      methods: {
+        onResize(event) {
+          this.width = window.innerWidth;
+          this.height = window.innerHeight;
+        },
+        handleStockChange(e) {
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+          vm.stopPrediction();
+          selectedStock = e.target.value;
+          this.title = e.target.value;
+        },
+        setInterval(value) {
+          this.interval = value;
+          selectedInterval = value;
+          if (this.isDisabled(selectedDay)) {
+            this.day = 3;
+          }
+        },
+        setDay(value) {
+          if (!this.isDisabled(value)) {
+            this.day = value;
+            selectedDay = value;
+          }
+        },
+        isDisabled(day) {
+          if (day === 1 && this.interval === 15) return true;
+        },
+        startPrediction() {
+          loadData = [];
+          clearInterval(intervalId);
+          fetchData(this, selectedStock, selectedInterval, selectedDay);
+
+          intervalId = setInterval(() => {
+            this.closeWebSocket();
+            fetchData(this, selectedStock, selectedInterval, selectedDay);
+          }, selectedInterval * 60 * 1000);
+        },
+        stopPrediction() {
+          clearInterval(intervalId);
+          if (vm.abortController) {
+            vm.abortController.abort();
+          }
+          this.closeWebSocket(); // Add this line to close the WebSocket connection
+          vm.data = {};
+          loadData = [];
+          vm.abortController = new AbortController();
+          vm.abortSignal = vm.abortController.signal;
+        },
+        closeWebSocket() {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
+        },
+
+        sidebarOp(value) {
+          const sideContainer = document.getElementById("side-container");
+          if (!value) {
+            sideContainer.style.display = "none";
+            this.sideWidth = 0;
+            this.op = !value;
+          } else {
+            this.sideWidth = (window.innerWidth * 1) / 4;
+            sideContainer.style.display = "block";
+            this.op = !value;
+          }
+        },
+      },
+      computed: {
+        colors() {
+          return this.night
+            ? {}
+            : {
+              colorBack: "#fff",
+              colorGrid: "#eee",
+              colorText: "#333",
+            };
+        },
+      },
+      beforeDestroy() {
+        window.removeEventListener("resize", this.onResize);
+      },
+    });
+
+    function renderStocks(vm) {
+      const select = document.getElementById("stockSelect");
+      stocks.forEach((stock) => {
+        return stock;
+      });
+      select.addEventListener("change", (e) => {
+        vm.handleStockChange(e);
+      });
+    }
+    renderStocks(vm);
+
+    const startBtn = document.getElementById("startBtn");
+
+    startBtn.addEventListener("click", () => {
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      vm.startPrediction();
+    });
+
+    const stopBtn = document.getElementById("stopBtn");
+    stopBtn.addEventListener("click", () => {
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      vm.stopPrediction();
+    });
+  </script>
+</body>
+
 </html>
