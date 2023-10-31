@@ -216,7 +216,7 @@
     }
 
     .fourthRow {
-      display: contents;
+      margin-top: 5px;
     }
 
     .open,
@@ -396,19 +396,20 @@
             <p>volume</p>
           </div>
         </div>
-        <div class="fourthRow row">
-          <div class="bullish">
-            <p>Bullish Doji</p>
-            <span id="bull"></span>
-          </div>
-          <div class="bearish">
-            <p>Bearish Doji</p>
-            <span id="bear"></span>
-          </div>
-        </div>
+        
       </div>
       <div class="horizontal">Patterns</div>
       <div class="line"></div>
+      <div class="fourthRow">
+        <div class="bullish">
+          <p>Bullish Doji</p>
+          <span id="bull"></span>
+        </div>
+        <div class="bearish">
+          <p>Bearish Doji</p>
+          <span id="bear"></span>
+        </div>
+      </div>
     </div>
     <!-- <input type="checkbox" v-model="night"> -->
     <!-- <label>NM</label> -->
@@ -519,7 +520,32 @@
             signal: vm.abortSignal,
           }
         );
-
+          const vwapResponse = await fetch("http://18.119.106.158/data/vwap", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            SYMB: symbol,
+            Interval: inter,
+            Range: day,
+          }),
+          signal: vm.abortSignal,
+        });
+        const smaResponse = await fetch("http://18.119.106.158/data/sma", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            SYMB: symbol,
+            Interval: inter,
+            Range: day,
+            Period: 20,
+          }),
+          signal: vm.abortSignal,
+        });
+        
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
@@ -527,8 +553,10 @@
         const rawData = await response.json();
         const predictedData = await predictedResponse.json();
 
-
-        if (rawData && predictedData.data[0][0]) {
+        const vwapData = await vwapResponse.json();
+        const smaData = await smaResponse.json();
+        
+        if (rawData && predictedData.data[0]) {
           var accuracy = document.getElementById("accuracy");
           accuracy.innerText = predictedData.accuracy.toFixed(2) + "%";
           var bull = document.getElementById("bull");
@@ -537,9 +565,32 @@
           var bear = document.getElementById("bear");
           bear.style.backgroundColor = predictedData.bear ? "green" : "red";
           loadData.push(predictedData.data[0]);
+          let onchartIndicators = [
+            {
+              name: "SMA 20",
+              type: "SMA",
+              data: smaData,
+              settings: {
+                color: 'orange',
+                lineWidth: 1,
+              },
+            },
+            {
+              name: "VWAP",
+              type: "Spline",
+              data: vwapData,
+              settings: {
+                color: 'blue',
+                lineWidth: 1,
+              },
+            }
+            // ... add more on-chart indicators as needed
+
+          ];
 
           var newData = { ohlcv: rawData.concat(loadData) };
           vm.data = new TradingVueJs.DataCube(newData);
+          vm.data.data.onchart = onchartIndicators;
           lastData = newData.ohlcv[rawData.length - 1];
           lastIndex = rawData.length - 1;
           newHigh = lastData[4];
@@ -615,6 +666,7 @@
                 console.log(newOpen, newHigh, newLow, newClose);
                 var newWsData = { ohlcv: rawData.concat(loadData) };
                 vm.data = new TradingVueJs.DataCube(newWsData);
+                vm.data.data.onchart = onchartIndicators;
                 previousData = wsData.price;
               } catch (error) {
                 console.error("Error parsing WebSocket data:", error);
@@ -636,6 +688,7 @@
           console.log("else");
           var newData = { ohlcv: rawData };
           vm.data = new TradingVueJs.DataCube(newData);
+          vm.data.data.onchart = onchartIndicators;
           lastData = newData.ohlcv[rawData.length - 1];
           lastIndex = rawData.length - 1;
           newOpen = lastData[4];
@@ -682,6 +735,7 @@
                 //newWsData.ohlcv[lastIndex] = arrays[Math.floor(Math.random() * arrays.length)]
                 console.log(newOpen, newHigh, newLow, newClose);
                 vm.data = new TradingVueJs.DataCube(newWsData);
+                vm.data.data.onchart = onchartIndicators;
               } catch (error) {
                 console.error("Error parsing WebSocket data:", error);
               }
