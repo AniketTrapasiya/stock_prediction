@@ -204,6 +204,7 @@
     .row {
       display: flex;
       margin: 10px;
+      text-align: end;
       justify-content: space-around;
     }
 
@@ -214,15 +215,30 @@
     .row div::-webkit-scrollbar {
       display: none;
     }
+    
+    .acv {
+      width: calc(100% - 20%);
+    right: 20px;
+    /* left: -23px; */
+    position: absolute;
+    }
 
+    .thirdRow {
+      position: relative;
+    padding: 10px 0 0 0;
+    }
     .fourthRow {
-      margin-top: 5px;
+      margin-top: 10px;
+    }
+    .fourthRow div{
+      margin: 10px;
     }
 
     .open,
     .high,
     .low,
     .close {
+      text-align: end;
       margin: 0 10px;
     }
 
@@ -258,6 +274,7 @@
       position: absolute;
       float: right;
       top: 20%;
+      min-width: 200px;
       text-align: start;
       padding: 10px;
 
@@ -386,6 +403,7 @@
             <p>Close</p>
           </div>
         </div>
+      <div class="line acv"></div>
         <div class="thirdRow row">
           <div class="accuracy">
             <span id="accuracy">0%</span>
@@ -771,7 +789,7 @@
     let loading = false;
     let intervalId; // Add this line to store the interval ID
     let selectOp = false; // Add this line to store the interval ID
-
+  
     let vm = new Vue({
       el: "#app",
       data: {
@@ -841,6 +859,16 @@
           loadData = [];
           vm.abortController = new AbortController();
           vm.abortSignal = vm.abortController.signal;
+          var openValue = document.getElementById("open-value");
+          var highValue = document.getElementById("high-value");
+          var lowValue = document.getElementById("low-value");
+          var closeValue = document.getElementById("close-value");
+          var accuracy = document.getElementById("accuracy");
+          accuracy.innerText = "0%";
+          openValue.innerText = 0;
+          highValue.innerText = 0;
+          lowValue.innerText = 0;
+          closeValue.innerText = 0;
         },
         closeWebSocket() {
           if (ws && ws.readyState === WebSocket.OPEN) {
