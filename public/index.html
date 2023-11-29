@@ -215,22 +215,24 @@
     .row div::-webkit-scrollbar {
       display: none;
     }
-    
+
     .acv {
       width: calc(100% - 20%);
-    right: 20px;
-    /* left: -23px; */
-    position: absolute;
+      right: 20px;
+      /* left: -23px; */
+      position: absolute;
     }
 
     .thirdRow {
       position: relative;
-    padding: 10px 0 0 0;
+      padding: 10px 0 0 0;
     }
+
     .fourthRow {
       margin-top: 10px;
     }
-    .fourthRow div{
+
+    .fourthRow div {
       margin: 10px;
     }
 
@@ -250,23 +252,17 @@
       justify-content: space-between;
     }
 
-    .bullish span,
-    .bearish span {
-      margin-right: 15px;
-    }
-
     .bullish p,
     .bearish p {
       color: #a5a5a5;
     }
 
     #bull,
-    #bear {
+    #bear, 
+      #db,
+    #dt{
       display: inline-block;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background-color: red;
+      color: red;
     }
 
     .side-container {
@@ -403,7 +399,7 @@
             <p>Close</p>
           </div>
         </div>
-      <div class="line acv"></div>
+        <div class="line acv"></div>
         <div class="thirdRow row">
           <div class="accuracy">
             <span id="accuracy">0%</span>
@@ -414,18 +410,25 @@
             <p>volume</p>
           </div>
         </div>
-        
       </div>
       <div class="horizontal">Patterns</div>
       <div class="line"></div>
       <div class="fourthRow">
         <div class="bullish">
           <p>Bullish Doji</p>
-          <span id="bull"></span>
+          <span id="bull">0%</span>
         </div>
         <div class="bearish">
           <p>Bearish Doji</p>
-          <span id="bear"></span>
+          <span id="bear">0%</span>
+        </div>
+        <div class="bearish">
+          <p>Double Bottom</p>
+          <span id="db">0%</span>
+        </div>
+        <div class="bearish">
+          <p>Double Top</p>
+          <span id="dt">0%</span>
         </div>
       </div>
     </div>
@@ -503,11 +506,75 @@
     let Data3 = {};
     let previousData;
     let ws;
-    async function fetchData(vm, symbol, inter, day) {
-      try {
-        vm.loading = true;
-        vm.abortController = new AbortController();
-        vm.abortSignal = vm.abortController.signal;
+    async function calculateAccuracy(actual, predicted) {
+      let accuracy = [];
+      let accuracies = [];
+
+      for (let i = 0; i < actual.length; i++) {
+        let currentActual = actual[i];
+        let currentPredicted = predicted[i];
+
+        let currentAccuracy = Math.abs(100 - Math.abs(currentActual - currentPredicted) * 100);
+        let currentMask = Math.abs(currentActual - currentPredicted) <= 1;
+
+        accuracy.push(currentAccuracy);
+        accuracies.push(currentMask ? currentAccuracy : 0);
+      }
+
+      console.log("Individual Accuracies:", accuracies);
+
+      let meanAccuracy = accuracies.reduce((a, b) => a + b, 0) / accuracies.length;
+      return meanAccuracy;
+    }
+
+     async function checkPatternApiResponse(symbol, inter, day) {
+          try {
+            const doublePrediction = await fetch("http://18.119.106.158/data/pattern", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                SYMB: symbol,
+                Interval: inter,
+                Range: day,
+              }),
+              signal: vm.abortSignal,
+            });
+            if(doublePrediction) {
+            const doublePredictedData = await doublePrediction.json();
+            console.log(doublePredictedData)
+            var doubleBottom = document.getElementById("db");
+            var doubleTop = document.getElementById("dt");
+            if (doublePredictedData.doubleBottom) {
+              doubleBottom.style.color = "green"
+              doubleBottom.innerText = doublePredictedData.doubleBottom_Accuracy + "%";
+            } else {
+              doubleBottom.style.color = "red"
+              doubleBottom.innerText = "0%";
+            }
+            if (doublePredictedData.doubleTop) {
+              doubleTop.style.color = "green"
+              doubleTop.innerText = doublePredictedData.doubleTop_Accuracy + "%";
+            } else {
+              doubleTop.style.color = "red"
+              doubleTop.innerText = "0%";
+            }
+            return true;
+          }
+        } catch (error) {
+            console.error("Error checking pattern API response:", error);
+          }
+        }
+        
+        
+        async function fetchData(vm, symbol, inter, day) {
+          try {
+            vm.loading = true;
+            vm.abortController = new AbortController();
+            vm.abortSignal = vm.abortController.signal;
+            var accuracy = document.getElementById("accuracy");
+            accuracy.innerText = "0%";
         const response = await fetch("http://18.119.106.158/data/data", {
           method: "POST",
           headers: {
@@ -538,7 +605,7 @@
             signal: vm.abortSignal,
           }
         );
-          const vwapResponse = await fetch("http://18.119.106.158/data/vwap", {
+        const vwapResponse = await fetch("http://18.119.106.158/data/vwap", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -563,7 +630,7 @@
           }),
           signal: vm.abortSignal,
         });
-        
+
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
@@ -573,23 +640,54 @@
 
         const vwapData = await vwapResponse.json();
         const smaData = await smaResponse.json();
-        
+        checkPatternApiResponse(symbol, inter, day)
         if (rawData && predictedData.data[0]) {
-          var accuracy = document.getElementById("accuracy");
           accuracy.innerText = predictedData.accuracy.toFixed(2) + "%";
           var bull = document.getElementById("bull");
-          bull.style.backgroundColor = predictedData.bull ? "green" : "red";
+          bull.style.color = predictedData.bull ? "green" : "red";
 
           var bear = document.getElementById("bear");
-          bear.style.backgroundColor = predictedData.bear ? "green" : "red";
+          bear.style.color = predictedData.bear ? "green" : "red";
           loadData.push(predictedData.data[0]);
+
+          const lastActualValues = rawData.slice(-1);
+          console.log(rawData);
+
+          if (predictedData.bull) {
+            calculateAccuracy(lastActualValues[0], predictedData.data[0]).then((res) => {
+              bull.innerText = res.toFixed(2) + "%";
+              bull.style.color = "green";
+            }).catch((e) => {
+              bull.style.color = "red";
+              bull.innerText = "0%";
+            })
+          } else {
+            bull.innerText = "0%";
+              bull.style.color = "red";
+
+          }
+          if (predictedData.bear) {
+            calculateAccuracy(lastActualValues[0], predictedData.data[0]).then((res) => {
+              bear.innerText = res.toFixed(2) + "%";
+              bear.style.color = "green";
+
+            }).catch((e) => {
+              bear.innerText = "0%";
+              bear.style.color = "red";
+
+            })
+          } else {
+            bear.innerText = "0%";
+              bear.style.color = "red";
+          }
+
           let onchartIndicators = [
             {
               name: "SMA 20",
               type: "SMA",
               data: smaData,
               settings: {
-                color: 'orange',
+                color: "orange",
                 lineWidth: 1,
               },
             },
@@ -598,12 +696,11 @@
               type: "Spline",
               data: vwapData,
               settings: {
-                color: 'blue',
+                color: "blue",
                 lineWidth: 1,
               },
             }
             // ... add more on-chart indicators as needed
-
           ];
 
           var newData = { ohlcv: rawData.concat(loadData) };
@@ -789,7 +886,7 @@
     let loading = false;
     let intervalId; // Add this line to store the interval ID
     let selectOp = false; // Add this line to store the interval ID
-  
+
     let vm = new Vue({
       el: "#app",
       data: {
