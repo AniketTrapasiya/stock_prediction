@@ -260,7 +260,8 @@
     #bull,
     #bear, 
       #db,
-    #dt{
+    #dt,
+    #hsh{
       display: inline-block;
       color: red;
     }
@@ -430,6 +431,10 @@
           <p>Double Top</p>
           <span id="dt">0%</span>
         </div>
+        <div class="bearish">
+          <p>Head & Shoulders</p>
+          <span id="hsh">0%</span>
+        </div>
       </div>
     </div>
     <!-- <input type="checkbox" v-model="night"> -->
@@ -546,6 +551,7 @@
             console.log(doublePredictedData)
             var doubleBottom = document.getElementById("db");
             var doubleTop = document.getElementById("dt");
+            var HeadAndShoulders = document.getElementById("hsh");
             if (doublePredictedData.doubleBottom) {
               doubleBottom.style.color = "green"
               doubleBottom.innerText = doublePredictedData.doubleBottom_Accuracy + "%";
@@ -559,6 +565,13 @@
             } else {
               doubleTop.style.color = "red"
               doubleTop.innerText = "0%";
+            }
+            if(doublePredictedData.HeadAndShoulders) {
+              HeadAndShoulders.innerText = doublePredictedData.HeadAndShoulders_Accuracy + "%";
+              HeadAndShoulders.style.color = "green"
+            } else {
+              HeadAndShoulders.style.color = "red"
+              HeadAndShoulders.innerText = "0%";
             }
             return true;
           }
