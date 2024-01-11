@@ -232,10 +232,6 @@
       margin-top: 10px;
     }
 
-    .fourthRow div {
-      margin: 10px;
-    }
-
     .open,
     .high,
     .low,
@@ -261,7 +257,9 @@
     #bear, 
       #db,
     #dt,
-    #hsh{
+    #hsh,
+    #ttt,
+    #tbt {
       display: inline-block;
       color: red;
     }
@@ -270,8 +268,8 @@
       color: white;
       position: absolute;
       float: right;
-      top: 20%;
-      min-width: 200px;
+      top: 13%;
+      min-width: 220px;
       text-align: start;
       padding: 10px;
 
@@ -435,6 +433,14 @@
           <p>Head & Shoulders</p>
           <span id="hsh">0%</span>
         </div>
+        <div class="bearish">
+          <p>Triple Bottom Triangles</p>
+          <span id="tbt">0%</span>
+        </div>
+        <!-- <div class="bearish">
+          <p>Triple Top Triangles</p>
+          <span id="ttt">0%</span>
+        </div> -->
       </div>
     </div>
     <!-- <input type="checkbox" v-model="night"> -->
@@ -552,6 +558,8 @@
             var doubleBottom = document.getElementById("db");
             var doubleTop = document.getElementById("dt");
             var HeadAndShoulders = document.getElementById("hsh");
+            var TripleBottomTriangles = document.getElementById("tbt");
+              var TripleTopTriangles = document.getElementById("ttt");
             if (doublePredictedData.doubleBottom) {
               doubleBottom.style.color = "green"
               doubleBottom.innerText = doublePredictedData.doubleBottom_Accuracy + "%";
@@ -573,6 +581,21 @@
               HeadAndShoulders.style.color = "red"
               HeadAndShoulders.innerText = "0%";
             }
+
+            if (doublePredictedData.TripleBottomTriangles) {
+                TripleBottomTriangles.style.color = "green"
+                TripleBottomTriangles.innerText = doublePredictedData.TripleBottomTrianglesAccuracy + "%";
+              } else {
+                TripleBottomTriangles.style.color = "red"
+                TripleBottomTriangles.innerText = "0%";
+              }
+              // if (doublePredictedData.TripleTopTriangles) {
+              //  TripleTopTriangles.style.color = "green"
+              //  TripleTopTriangles.innerText = doublePredictedData.TripleTopTrianglesAccuracy + "%";
+             // } else {
+              //  TripleTopTriangles.style.color = "red"
+               // TripleTopTriangles.innerText = "0%";
+              // }
             return true;
           }
         } catch (error) {
